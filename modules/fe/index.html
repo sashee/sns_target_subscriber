@@ -1,0 +1,37 @@
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+	const refresh = () => {
+		fetch("${BACKEND_URL}/")
+			.then((res) => res.json())
+			.then((res) => {
+				const sorted_reverse = [...res].sort((a, b) => Number(b.timestamp.N) - Number(a.timestamp.N));
+				document.querySelector("#result").innerText = sorted_reverse.map((item) => {
+					return `$${new Date(Number(item.timestamp.N)).toLocaleString()} [$${item.name.S}]: $${item.message.S}`;
+				}).join("\n");
+			});
+	}
+	refresh();
+	setInterval(refresh, 10000);
+	const addListener = (elem, target) => {
+		elem.addEventListener("click", async () => {
+			[...document.querySelectorAll("button")].forEach((e) => e.disabled = true)
+			await fetch(`${BACKEND_URL}/send?target=$${target}&message=$${encodeURIComponent(document.querySelector("#input").value)}`);
+			await new Promise((res) => setTimeout(res, 1000));
+			[...document.querySelectorAll("button")].forEach((e) => e.disabled = false)
+			refresh();
+		})
+	}
+	addListener(document.querySelector("#to1"), "lambda_1");
+	addListener(document.querySelector("#to2"), "lambda_2");
+	addListener(document.querySelector("#toboth"), "all");
+});
+</script>
+message body: <input type="text" value="test!" id="input">
+<br/>
+<button id="to1">Send only to subscriber 1</button>
+<button id="to2">Send only to subscriber 2</button>
+<button id="toboth">Send to both</button>
+
+<br/>
+
+<div id="result"></div>
